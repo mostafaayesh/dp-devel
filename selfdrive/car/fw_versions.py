@@ -412,5 +412,5 @@ if __name__ == "__main__":
   if args.json:
     model = args.json
     vers_str = ''.join(versions)
-    crash.capture_info('Model is: '+model+'. '+vers_str)
+    sentry.capture_info('Model is: '+model+'. '+vers_str)
     print("Uploaded JSON & Sentry to fork maintainer")

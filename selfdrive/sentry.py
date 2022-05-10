@@ -4,15 +4,15 @@ from enum import Enum
 from sentry_sdk.integrations.threading import ThreadingIntegration
 
 from common.params import Params
-from selfdrive.athena.registration import is_registered_device
-from selfdrive.hardware import HARDWARE, PC
+#from selfdrive.athena.registration import is_registered_device
+from selfdrive.hardware import HARDWARE#, PC
 from selfdrive.swaglog import cloudlog
 from selfdrive.version import get_branch, get_commit, get_origin, get_version, \
                               is_comma_remote, is_dirty, is_tested_branch
 
 import os
-import sys
-import capnp
+#import sys
+#import capnp
 import traceback
 import requests
 from cereal import car
@@ -37,7 +37,7 @@ except AttributeError:
   dongle_id = "None"
 try:
   gitname = Params().get("GithubUsername", encoding='utf-8')
-except:
+except Exception:
   gitname = ""
 try:
   ip = requests.get('https://checkip.amazonaws.com/').text.strip()
@@ -91,7 +91,7 @@ def set_tag(key: str, value: str) -> None:
 
 def init(project: SentryProject) -> None:
   # forks like to mess with this, so double check
-  comma_remote = is_comma_remote() and "commaai" in get_origin(default="")
+  #comma_remote = is_comma_remote() and "commaai" in get_origin(default="")
   #if not comma_remote or not is_registered_device() or PC:
     #return
 
