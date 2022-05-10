@@ -8,7 +8,7 @@ from common.params import Params
 from selfdrive.hardware import HARDWARE#, PC
 from selfdrive.swaglog import cloudlog
 from selfdrive.version import get_branch, get_commit, get_origin, get_version, \
-                              is_comma_remote, is_dirty, is_tested_branch
+                              is_dirty, is_tested_branch
 
 import os
 #import sys
@@ -115,6 +115,7 @@ def init(project: SentryProject) -> None:
 
   sentry_sdk.set_user({"id": dongle_id})
   sentry_sdk.set_tag("dirty", is_dirty())
+  sentry_sdk.set_tag({"gitname": gitname})
   sentry_sdk.set_tag("origin", get_origin())
   sentry_sdk.set_tag("branch", get_branch())
   sentry_sdk.set_tag("commit", get_commit())
