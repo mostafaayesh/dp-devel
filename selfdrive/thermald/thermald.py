@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import datetime
+#import datetime
 import os
 import queue
 import threading
@@ -23,7 +23,7 @@ from selfdrive.statsd import statlog
 from selfdrive.swaglog import cloudlog
 from selfdrive.thermald.power_monitoring import PowerMonitoring
 from selfdrive.thermald.fan_controller import EonFanController, UnoFanController, TiciFanController
-from selfdrive.version import terms_version, training_version
+#from selfdrive.version import terms_version, training_version
 
 ThermalStatus = log.DeviceState.ThermalStatus
 NetworkType = log.DeviceState.NetworkType
@@ -109,14 +109,7 @@ def hw_state_thread(end_event, hw_queue):
   modem_configured = False
 
   while not end_event.is_set():
-    # dp - load temp monitor conf
-    last_modified_check, modified = get_last_modified(LAST_MODIFIED_THERMALD, last_modified_check, modified)
-    if last_modified != modified:
-      dp_temp_monitor, dp_last_modified_temp_monitor = param_get_if_updated("dp_temp_monitor", "bool", dp_temp_monitor, dp_last_modified_temp_monitor)
-      dp_auto_shutdown, dp_last_modified_auto_shutdown = param_get_if_updated("dp_auto_shutdown", "bool", dp_auto_shutdown, dp_last_modified_auto_shutdown)
-      dp_auto_shutdown_in, dp_last_modified_auto_shutdown_in = param_get_if_updated("dp_auto_shutdown_in", "int", dp_auto_shutdown_in, dp_last_modified_auto_shutdown_in)
-      dp_fan_mode, dp_fan_mode_last = param_get_if_updated("dp_fan_mode", "int", dp_fan_mode, dp_fan_mode_last)
-      last_modified = modified
+
     # these are expensive calls. update every 10s
     if (count % int(10. / DT_TRML)) == 0:
       try:
@@ -234,6 +227,14 @@ def thermald_thread(end_event, hw_queue):
   dp_no_offroad_fix = params.get_bool('dp_no_offroad_fix')
 
   while not end_event.is_set():
+    # dp - load temp monitor conf
+    last_modified_check, modified = get_last_modified(LAST_MODIFIED_THERMALD, last_modified_check, modified)
+    if last_modified != modified:
+      dp_temp_monitor, dp_last_modified_temp_monitor = param_get_if_updated("dp_temp_monitor", "bool", dp_temp_monitor, dp_last_modified_temp_monitor)
+      dp_auto_shutdown, dp_last_modified_auto_shutdown = param_get_if_updated("dp_auto_shutdown", "bool", dp_auto_shutdown, dp_last_modified_auto_shutdown)
+      dp_auto_shutdown_in, dp_last_modified_auto_shutdown_in = param_get_if_updated("dp_auto_shutdown_in", "int", dp_auto_shutdown_in, dp_last_modified_auto_shutdown_in)
+      #dp_fan_mode, dp_fan_mode_last = param_get_if_updated("dp_fan_mode", "int", dp_fan_mode, dp_fan_mode_last)
+      last_modified = modified
     sm.update(PANDA_STATES_TIMEOUT)
 
     pandaStates = sm['pandaStates']

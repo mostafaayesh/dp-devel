@@ -19,7 +19,7 @@ EventName = car.CarEvent.EventName
 
 
 def get_startup_event(car_recognized, controller_available, fw_seen):
-  if True: #is_comma_remote() and is_tested_branch():
+  if True: #is_comma_remote() and is_tested_branch(): # pylint: disable=abstract-class-instantiated
     event = EventName.startup
   else:
     event = EventName.startupMaster
@@ -185,11 +185,11 @@ def fingerprint(logcan, sendcan):
 
 #dp
 def is_connected_to_internet(timeout=5):
-    try:
-        requests.get("https://sentry.io", timeout=timeout)
-        return True
-    except Exception:
-        return False
+  try:
+    requests.get("https://sentry.io", timeout=timeout)
+    return True
+  except Exception:
+    return False
 
 def crash_log(candidate):
   while True:
