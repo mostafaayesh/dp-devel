@@ -68,7 +68,7 @@ def register(show_spinner=False) -> str:
     params.put("IMEI", imei1)
     params.put("HardwareSerial", serial)
 
-    backoff = 0
+    #backoff = 0
     start_time = time.monotonic()
     while True:
       try:

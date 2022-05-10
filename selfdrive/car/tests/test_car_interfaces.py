@@ -26,6 +26,8 @@ class TestCarInterfaces(unittest.TestCase):
 
     car_fw = []
 
+    sm = messaging.SubMaster(['dragonConf'])
+
     car_params = CarInterface.get_params(car_name, fingerprints, car_fw)
     car_interface = CarInterface(car_params, CarController, CarState)
     assert car_params
@@ -46,13 +48,16 @@ class TestCarInterfaces(unittest.TestCase):
     # Run car interface
     CC = car.CarControl.new_message()
     for _ in range(10):
-      car_interface.update(CC, [])
+      sm.update(0)
+      car_interface.update(CC, [], sm['dragonConf'])
       car_interface.apply(CC)
       car_interface.apply(CC)
 
     CC = car.CarControl.new_message()
     CC.enabled = True
     for _ in range(10):
+      sm.update(0)
+      car_interface.update(CC, [], sm['dragonConf'])
       car_interface.update(CC, [])
       car_interface.apply(CC)
       car_interface.apply(CC)
