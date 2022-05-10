@@ -38,7 +38,7 @@ SIMULATION = "SIMULATION" in os.environ
 NOSENSOR = "NOSENSOR" in os.environ
 IGNORE_PROCESSES = {"rtshield", "uploader", "deleter", "loggerd", "logmessaged", "tombstoned",
                     "logcatd", "proclogd", "clocksd", "updated", "timezoned", "manage_athenad",
-                    "statsd", "shutdownd"} | \
+                    "statsd", "shutdownd", "dragonConf"} | \
                    {k for k, v in managed_processes.items() if not v.enabled}
 
 ThermalStatus = log.DeviceState.ThermalStatus
@@ -61,6 +61,8 @@ ENABLED_STATES = (State.preEnabled, *ACTIVE_STATES)
 class Controls:
   def __init__(self, sm=None, pm=None, can_sock=None, CI=None):
     config_realtime_process(4 if TICI else 3, Priority.CTRL_HIGH)
+    params = Params()
+    self.dp_jetson = params.get_bool('dp_jetson')
 
     # Setup sockets
     self.pm = pm
@@ -96,9 +98,11 @@ class Controls:
     self.sm = sm
     if self.sm is None:
       ignore = ['driverCameraState', 'managerState'] if SIMULATION else None
+      if self.dp_jetson:
+        ignore = ['driverCameraState', 'driverMonitoringState'] if ignore is None else ignore + ['driverCameraState', 'driverMonitoringState']
       self.sm = messaging.SubMaster(['deviceState', 'pandaStates', 'peripheralState', 'modelV2', 'liveCalibration',
                                      'driverMonitoringState', 'longitudinalPlan', 'lateralPlan', 'liveLocationKalman',
-                                     'managerState', 'liveParameters', 'radarState'] + self.camera_packets + joystick_packet,
+                                     'managerState', 'liveParameters', 'radarState', 'dragonConf'] + self.camera_packets + joystick_packet,
                                     ignore_alive=ignore, ignore_avg_freq=['radarState', 'longitudinalPlan'])
 
     # set alternative experiences from parameters
@@ -138,7 +142,9 @@ class Controls:
     self.LoC = LongControl(self.CP)
     self.VM = VehicleModel(self.CP)
 
-    if self.CP.steerControlType == car.CarParams.SteerControlType.angle:
+    if params.get_bool('dp_torque'):
+      self.LaC = LatControlTorque(self.CP, self.CI)
+    elif self.CP.steerControlType == car.CarParams.SteerControlType.angle:
       self.LaC = LatControlAngle(self.CP, self.CI)
     elif self.CP.lateralTuning.which() == 'pid':
       self.LaC = LatControlPID(self.CP, self.CI)
@@ -190,6 +196,11 @@ class Controls:
     self.rk = Ratekeeper(100, print_delay_threshold=None)
     self.prof = Profiler(False)  # off by default
 
+    # dp
+    self.sm['dragonConf'].dpAtl = False
+    self.sm['dragonConf'].dpSrCustom = self.CP.steerRatio
+    self.sm['dragonConf'].dpSrLearner = True
+
   def update_events(self, CS):
     """Compute carEvents from carState"""
 
@@ -214,22 +225,22 @@ class Controls:
       self.events.add(EventName.pedalPressedPreEnable if self.disengage_on_accelerator else
                       EventName.gasPressedOverride)
 
-    if not self.CP.notCar:
+    if not self.CP.notCar and not self.dp_jetson:
       self.events.add_from_msg(self.sm['driverMonitoringState'].events)
 
     # Handle car events. Ignore when CAN is invalid
     if CS.canTimeout:
       self.events.add(EventName.canBusMissing)
     elif not CS.canValid:
-      self.events.add(EventName.canError)
+      self.events.add(EventName.pcmDisable if self.sm['dragonConf'].dpAtl else EventName.canError)
     else:
       self.events.add_from_msg(CS.events)
 
     # Create events for battery, temperature, disk space, and memory
-    if EON and (self.sm['peripheralState'].pandaType != PandaType.uno) and \
-       self.sm['deviceState'].batteryPercent < 1 and self.sm['deviceState'].chargingError:
+    #if EON and (self.sm['peripheralState'].pandaType != PandaType.uno) and \
+    #   self.sm['deviceState'].batteryPercent < 1 and self.sm['deviceState'].chargingError:
       # at zero percent battery, while discharging, OP should not allowed
-      self.events.add(EventName.lowBattery)
+    #  self.events.add(EventName.lowBattery)
     if self.sm['deviceState'].thermalStatus >= ThermalStatus.red:
       self.events.add(EventName.overheat)
     if self.sm['deviceState'].freeSpacePercent < 7 and not SIMULATION:
@@ -266,6 +277,8 @@ class Controls:
       if (CS.leftBlindspot and direction == LaneChangeDirection.left) or \
          (CS.rightBlindspot and direction == LaneChangeDirection.right):
         self.events.add(EventName.laneChangeBlocked)
+      elif self.sm['lateralPlan'].dpALCAStartIn > 0:
+        self.events.add(EventName.autoLaneChange)
       else:
         if direction == LaneChangeDirection.left:
           self.events.add(EventName.preLaneChangeLeft)
@@ -299,7 +312,7 @@ class Controls:
       self.events.add(EventName.processNotRunning)
     else:
       if not SIMULATION and not self.rk.lagging:
-        if not self.sm.all_alive(self.camera_packets):
+        if not self.dp_jetson and not self.sm.all_alive(self.camera_packets):
           self.events.add(EventName.cameraMalfunction)
         elif not self.sm.all_freq_ok(self.camera_packets):
           self.events.add(EventName.cameraFrameRate)
@@ -335,7 +348,7 @@ class Controls:
     if not self.sm['liveParameters'].valid:
       self.events.add(EventName.vehicleModelInvalid)
     if not self.sm['lateralPlan'].mpcSolutionValid:
-      self.events.add(EventName.plannerError)
+      self.events.add(EventName.steerTempUnavailable if self.sm['dragonConf'].dpAtl else EventName.plannerError)
     if not self.sm['liveLocationKalman'].sensorsOK and not NOSENSOR:
       if self.sm.frame > 5 / DT_CTRL:  # Give locationd some time to receive all the inputs
         self.events.add(EventName.sensorDataInvalid)
@@ -388,7 +401,7 @@ class Controls:
       v_future = speeds[-1]
     else:
       v_future = 100.0
-    if CS.brakePressed and v_future >= self.CP.vEgoStarting \
+    if not self.sm['dragonConf'].dpAtl and CS.brakePressed and v_future >= self.CP.vEgoStarting \
       and self.CP.openpilotLongitudinalControl and CS.vEgo < 0.3:
       self.events.add(EventName.noTarget)
 
@@ -397,7 +410,7 @@ class Controls:
 
     # Update carState from CAN
     can_strs = messaging.drain_sock_raw(self.can_sock, wait_for_one=True)
-    CS = self.CI.update(self.CC, can_strs)
+    CS = self.CI.update(self.CC, can_strs, self.sm['dragonConf'])
 
     self.sm.update(0)
 
@@ -428,7 +441,7 @@ class Controls:
       self.mismatch_counter = 0
 
     # All pandas not in silent mode must have controlsAllowed when openpilot is enabled
-    if self.enabled and any(not ps.controlsAllowed for ps in self.sm['pandaStates']
+    if not self.sm['dragonConf'].dpAtl and any(not ps.controlsAllowed and self.enabled for ps in self.sm['pandaStates']
            if ps.safetyModel not in IGNORED_SAFETY_MODES):
       self.mismatch_counter += 1
 
@@ -542,6 +555,8 @@ class Controls:
     params = self.sm['liveParameters']
     x = max(params.stiffnessFactor, 0.1)
     sr = max(params.steerRatio, 0.1)
+    if not self.sm['dragonConf'].dpSrLearner:
+      sr = self.sm['dragonConf'].dpSrCustom if self.sm['dragonConf'].dpSrCustom >= 10 else self.CP.steerRatio
     self.VM.update_params(x, sr)
 
     lat_plan = self.sm['lateralPlan']
@@ -566,6 +581,11 @@ class Controls:
       self.LaC.reset()
     if not CC.longActive:
       self.LoC.reset(v_pid=CS.vEgo)
+
+    # I dont think this is needed anymore -kumar
+    # dp - fix sudden brake?
+    #if CS.gasPressed or CS.brakePressed:
+    #  self.LoC.reset(v_pid=CS.vEgo)
 
     if not self.joystick_mode:
       # accel PID loop
@@ -696,8 +716,8 @@ class Controls:
       self.pm.send('sendcan', can_list_to_can_capnp(can_sends, msgtype='sendcan', valid=CS.canValid))
       CC.actuatorsOutput = self.last_actuators
 
-    force_decel = (self.sm['driverMonitoringState'].awarenessStatus < 0.) or \
-                  (self.state == State.softDisabling)
+    force_decel = False if self.dp_jetson else (self.sm['driverMonitoringState'].awarenessStatus < 0.) or \
+                    (self.state == State.softDisabling)
 
     # Curvature & Steering angle
     params = self.sm['liveParameters']
@@ -738,6 +758,10 @@ class Controls:
     controlsState.canErrorCounter = self.can_rcv_error_counter
 
     lat_tuning = self.CP.lateralTuning.which()
+    # dp - for ui
+    controlsState.angleSteers = CS.steeringAngleDeg
+    controlsState.steeringAngleDesiredDeg = actuators.steeringAngleDeg
+    
     if self.joystick_mode:
       controlsState.lateralControlState.debugState = lac_log
     elif self.CP.steerControlType == car.CarParams.SteerControlType.angle:

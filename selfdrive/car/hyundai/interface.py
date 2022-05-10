@@ -313,7 +313,7 @@ class CarInterface(CarInterfaceBase):
     if CP.openpilotLongitudinalControl:
       disable_ecu(logcan, sendcan, addr=0x7d0, com_cont_req=b'\x28\x83\x01')
 
-  def _update(self, c):
+  def _update(self, c, dragonconf):
     ret = self.CS.update(self.cp, self.cp_cam)
     ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
 

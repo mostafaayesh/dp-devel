@@ -33,6 +33,8 @@ class CarInterfaceBase(ABC):
     self.low_speed_alert = False
     self.silent_steer_warning = True
 
+    self.dragonconf = None
+
     self.CS = None
     self.can_parsers = []
     if CarState is not None:
@@ -108,7 +110,7 @@ class CarInterfaceBase(ABC):
   def _update(self, c: car.CarControl) -> car.CarState:
     pass
 
-  def update(self, c: car.CarControl, can_strings: List[bytes]) -> car.CarState:
+  def update(self, c: car.CarControl, can_strings: List[bytes], dragonconf) -> car.CarState:
     # parse can
     for cp in self.can_parsers:
       if cp is not None:

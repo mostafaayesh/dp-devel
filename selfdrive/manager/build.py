@@ -6,6 +6,8 @@ import time
 import textwrap
 from pathlib import Path
 import socket
+import re
+import socket
 
 # NOTE: Do NOT import anything here that needs be built (e.g. params)
 from common.basedir import BASEDIR

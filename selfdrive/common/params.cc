@@ -248,7 +248,7 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"dp_sr_learner", PERSISTENT},
     {"dp_sr_custom", PERSISTENT},
     {"dp_sr_stock", PERSISTENT},
-    {"dp_lqr", PERSISTENT},
+    {"dp_torque", PERSISTENT},
     {"dp_reset_live_param_on_start", PERSISTENT},
     {"dp_jetson", PERSISTENT},
     {"dp_car_assigned", PERSISTENT},

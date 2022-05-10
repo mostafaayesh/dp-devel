@@ -48,7 +48,7 @@ class CarInterface(CarInterfaceBase):
     return ret
 
   # returns a car.CarState
-  def _update(self, c):
+  def _update(self, c, dragonconf):
     # get basic data from phone and gps since CAN isn't connected
     sensors = messaging.recv_sock(self.sensor)
     if sensors is not None:

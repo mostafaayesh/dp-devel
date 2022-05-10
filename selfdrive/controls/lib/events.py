@@ -293,8 +293,15 @@ def wrong_car_mode_alert(CP: car.CarParams, sm: messaging.SubMaster, metric: boo
 def joystick_alert(CP: car.CarParams, sm: messaging.SubMaster, metric: bool, soft_disable_time: int) -> Alert:
   axes = sm['testJoystick'].axes
   gb, steer = list(axes)[:2] if len(axes) else (0., 0.)
-  vals = f"Gas: {round(gb * 100.)}%, Steer: {round(steer * 100.)}%"
+  vals = _("Gas: %s%%, Steer: %s%%") % (round(gb * 100.), round(steer * 100.))
   return NormalPermanentAlert(_("Joystick Mode"), vals)
+
+def alca_alert(CP: car.CarParams, sm: messaging.SubMaster, metric: bool, soft_disable_time: int) -> Alert:
+  return Alert(
+    _("Auto Lane Change starts in %.1f secs") % float(sm['lateralPlan'].dpALCAStartIn),
+    _("Monitor Other Vehicles"),
+    AlertStatus.normal, AlertSize.mid,
+    Priority.LOWER, VisualAlert.steerRequired, AudibleAlert.none, 0., alert_rate=0.1)
 
 
 
@@ -895,6 +902,27 @@ EVENTS: Dict[int, Dict[str, Union[Alert, AlertCallbackType]]] = {
   EventName.lkasDisabled: {
     ET.PERMANENT: NormalPermanentAlert(_("LKAS Disabled: Enable LKAS to engage")),
     ET.NO_ENTRY: NoEntryAlert(_("LKAS Disabled")),
+  },
+
+  # dp
+  EventName.autoLaneChange: {
+    ET.WARNING: alca_alert,
+  },
+
+  EventName.manualSteeringRequired: {
+    ET.WARNING: Alert(
+      _("STEERING REQUIRED: Lane Keeping OFF"),
+      "",
+      AlertStatus.normal, AlertSize.small,
+      Priority.LOW, VisualAlert.none, AudibleAlert.none, .0, alert_rate=0.25),
+  },
+
+  EventName.manualSteeringRequiredBlinkersOn: {
+    ET.WARNING: Alert(
+      _("STEERING REQUIRED: Blinkers ON"),
+      "",
+      AlertStatus.normal, AlertSize.small,
+      Priority.LOW, VisualAlert.none, AudibleAlert.none, .0, alert_rate=0.25),
   },
 
 }

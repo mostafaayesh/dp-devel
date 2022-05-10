@@ -154,7 +154,7 @@ class CarInterface(CarInterfaceBase):
     return ret
 
   # returns a car.CarState
-  def _update(self, c):
+  def _update(self, c, dragonconf):
     ret = self.CS.update(self.cp, self.cp_loopback)
 
     ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
