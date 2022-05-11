@@ -4,8 +4,6 @@ from common.conversions import Conversions as CV
 from selfdrive.car.mazda.values import CAR, LKAS_LIMITS
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
 from selfdrive.car.interfaces import CarInterfaceBase
-from common.dp_common import common_interface_atl, common_interface_get_params_lqr
-from common.params import Params
 
 ButtonType = car.CarState.ButtonEvent.Type
 EventName = car.CarEvent.EventName
@@ -22,7 +20,6 @@ class CarInterface(CarInterfaceBase):
 
     ret.carName = "mazda"
     ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.mazda)]
-    ret.lateralTuning.init('pid')
     ret.radarOffCan = True
 
     ret.dashcamOnly = candidate not in (CAR.CX5_2022, CAR.CX9_2021)
@@ -75,18 +72,11 @@ class CarInterface(CarInterfaceBase):
     ret.tireStiffnessFront, ret.tireStiffnessRear = scale_tire_stiffness(ret.mass, ret.wheelbase, ret.centerToFront,
                                                                          tire_stiffness_factor=tire_stiffness_factor)
 
-    # dp
-    ret = common_interface_get_params_lqr(ret)
-
     return ret
 
   # returns a car.CarState
-  def _update(self, c, dragonconf):
+  def _update(self, c):
     ret = self.CS.update(self.cp, self.cp_cam)
-
-    # dp
-    self.dragonconf = dragonconf
-    ret.cruiseState.enabled = common_interface_atl(ret, dragonconf.dpAtl)
 
     # events
     events = self.create_common_events(ret)
@@ -101,6 +91,6 @@ class CarInterface(CarInterfaceBase):
     return ret
 
   def apply(self, c):
-    ret = self.CC.update(c, self.CS, self.frame, self.dragonconf)
+    ret = self.CC.update(c, self.CS, self.frame)
     self.frame += 1
     return ret

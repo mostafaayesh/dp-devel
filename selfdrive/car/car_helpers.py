@@ -1,3 +1,4 @@
+#pylint: disable=W0125
 import os
 from typing import Any, Dict, List
 
