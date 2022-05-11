@@ -306,7 +306,7 @@ class CarController:
     # Send dashboard UI commands.
     if dragonconf.dpAtl and not dragonconf.dpAtlOpLong:
       pass
-    elif sefl.frame % 10 == 0:
+    elif self.frame % 10 == 0:
       idx = (self.frame // 10) % 4
       hud = HUDData(int(pcm_accel), int(round(hud_v_cruise)), hud_car,
                     hud_lanes, fcw_display, acc_alert, steer_required)

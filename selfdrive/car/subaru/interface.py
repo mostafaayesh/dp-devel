@@ -13,7 +13,7 @@ class CarInterface(CarInterfaceBase):
 
     ret.carName = "subaru"
     ret.radarOffCan = True
-    ret.radarOffCan = true
+    ret.lateralTuning.init('pid')
 
 
     if candidate in PREGLOBAL_CARS:

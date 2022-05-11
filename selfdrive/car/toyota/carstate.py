@@ -207,7 +207,7 @@ class CarState(CarStateBase):
     # dp
     # distance button
     self.distance = 1 if cp_cam.vl["ACC_CONTROL"]["DISTANCE"] == 1 else 0
-    ret.distanceLines = cp.vl["PCM_CRUISE_SM"]["DISTANCE_LINES"
+    ret.distanceLines = cp.vl["PCM_CRUISE_SM"]["DISTANCE_LINES"]
 
     return ret
 

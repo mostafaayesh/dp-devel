@@ -42,6 +42,15 @@ class CarController():
     main_on = CS.out.cruiseState.available
     steer_alert = hud_control.visualAlert in (VisualAlert.steerRequired, VisualAlert.ldw)
 
+    if CC.cruiseControl.cancel:
+      # cancel stock ACC
+      can_sends.append(fordcan.spam_cancel_button(self.packer))
+
+    # apply rate limits
+    new_steer = actuators.steeringAngleDeg
+    apply_steer = apply_ford_steer_angle_limits(new_steer, self.apply_steer_last, CS.out.vEgo)
+    self.steer_rate_limited = new_steer != apply_steer
+
     # dp
     blinker_on = CS.out.leftBlinker or CS.out.rightBlinker
     if not CC.enabled:
@@ -54,14 +63,6 @@ class CarController():
                                          apply_steer, CS.out.vEgo)
     self.last_blinker_on = blinker_on
 
-    if CC.cruiseControl.cancel:
-      # cancel stock ACC
-      can_sends.append(fordcan.spam_cancel_button(self.packer))
-
-    # apply rate limits
-    new_steer = actuators.steeringAngleDeg
-    apply_steer = apply_ford_steer_angle_limits(new_steer, self.apply_steer_last, CS.out.vEgo)
-    self.steer_rate_limited = new_steer != apply_steer
 
     # send steering commands at 20Hz
     if (frame % CarControllerParams.LKAS_STEER_STEP) == 0:
