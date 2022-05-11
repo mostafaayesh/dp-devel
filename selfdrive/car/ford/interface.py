@@ -4,6 +4,7 @@ from common.conversions import Conversions as CV
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint
 from selfdrive.car.ford.values import TransmissionType, CAR
 from selfdrive.car.interfaces import CarInterfaceBase
+from common.dp_common import common_interface_atl, common_interface_get_params_lqr
 
 
 EventName = car.CarEvent.EventName
@@ -16,6 +17,7 @@ class CarInterface(CarInterfaceBase):
 
     ret.carName = "ford"
     #ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.ford)]
+    ret.lateralTuning.init('pid')
     ret.dashcamOnly = True
 
     # Angle-based steering
@@ -23,6 +25,9 @@ class CarInterface(CarInterfaceBase):
     ret.steerControlType = car.CarParams.SteerControlType.angle
     ret.steerActuatorDelay = 0.1
     ret.steerLimitTimer = 1.0
+
+    # dp
+    ret = common_interface_get_params_lqr(ret)
 
     # TODO: detect stop-and-go vehicles
     stop_and_go = False
@@ -71,6 +76,10 @@ class CarInterface(CarInterfaceBase):
   def _update(self, c, dragonconf):
     ret = self.CS.update(self.cp, self.cp_cam)
 
+    # dp
+    self.dragonconf = dragonconf
+    ret.cruiseState.enabled = common_interface_atl(ret, dragonconf.dpAtl)
+
     ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
 
     events = self.create_common_events(ret)
@@ -79,6 +88,6 @@ class CarInterface(CarInterfaceBase):
     return ret
 
   def apply(self, c):
-    ret = self.CC.update(c, self.CS, self.frame)
+    ret = self.CC.update(c, self.CS, self.frame, self.dragonconf)
     self.frame += 1
     return ret

@@ -140,12 +140,12 @@ class CarInterfaceBase(ABC):
       events.add(EventName.doorOpen)
     if cs_out.seatbeltUnlatched:
       events.add(EventName.seatbeltNotLatched)
-    if cs_out.gearShifter != GearShifter.drive and (extra_gears is None or
-       cs_out.gearShifter not in extra_gears):
+    if self.dragonconf.dpGearCheck and cs_out.gearShifter not in (GearShifter.drive, GearShifter.sport, GearShifter.eco, GearShifter.low) and (extra_gears is None or
+        cs_out.gearShifter not in extra_gears):
       events.add(EventName.wrongGear)
     if cs_out.gearShifter == GearShifter.reverse:
       events.add(EventName.reverseGear)
-    if not cs_out.cruiseState.available:
+    if not cs_out.cruiseState.available and not self.dragonconf.dpAtl:
       events.add(EventName.wrongCarMode)
     if cs_out.espDisabled:
       events.add(EventName.espDisabled)
@@ -153,9 +153,9 @@ class CarInterfaceBase(ABC):
       events.add(EventName.stockFcw)
     if cs_out.stockAeb:
       events.add(EventName.stockAeb)
-    if cs_out.vEgo > MAX_CTRL_SPEED:
+    if cs_out.vEgo > MAX_CTRL_SPEED and self.dragonconf.dpSpeedCheck:
       events.add(EventName.speedTooHigh)
-    if cs_out.cruiseState.nonAdaptive:
+    if cs_out.cruiseState.nonAdaptive and not self.dragonconf.dpAtl:
       events.add(EventName.wrongCruiseMode)
     if cs_out.brakeHoldActive and self.CP.openpilotLongitudinalControl:
       events.add(EventName.brakeHold)
@@ -165,18 +165,22 @@ class CarInterfaceBase(ABC):
       events.add(EventName.accFaulted)
 
     # Handle permanent and temporary steering faults
-    self.steering_unpressed = 0 if cs_out.steeringPressed else self.steering_unpressed + 1
-    if cs_out.steerFaultTemporary:
-      # if the user overrode recently, show a less harsh alert
-      if self.silent_steer_warning or cs_out.standstill or self.steering_unpressed < int(1.5 / DT_CTRL):
-        self.silent_steer_warning = True
-        events.add(EventName.steerTempUnavailableSilent)
-      else:
-        events.add(EventName.steerTempUnavailable)
+    if (cs_out.leftBlinker or cs_out.rightBlinker) and self.dragonconf.dpLateralMode == 0:
+      events.add(EventName.manualSteeringRequiredBlinkersOn)
     else:
-      self.silent_steer_warning = False
-    if cs_out.steerFaultPermanent:
-      events.add(EventName.steerUnavailable)
+      # Handle permanent and temporary steering faults
+      self.steering_unpressed = 0 if cs_out.steeringPressed else self.steering_unpressed + 1
+      if cs_out.steerWarning:
+        # if the user overrode recently, show a less harsh alert
+        if self.silent_steer_warning or cs_out.standstill or self.steering_unpressed < int(1.5 / DT_CTRL):
+          self.silent_steer_warning = True
+          events.add(EventName.steerTempUnavailableSilent)
+        else:
+          events.add(EventName.steerTempUnavailable)
+      else:
+        self.silent_steer_warning = False
+      if cs_out.steerFaultPermanent:
+        events.add(EventName.steerUnavailable)
 
     # we engage when pcm is active (rising edge)
     # enabling can optionally be blocked by the car interface

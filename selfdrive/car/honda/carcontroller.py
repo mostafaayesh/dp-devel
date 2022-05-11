@@ -7,8 +7,9 @@ from common.realtime import DT_CTRL
 from opendbc.can.packer import CANPacker
 from selfdrive.car import create_gas_interceptor_command
 from selfdrive.car.honda import hondacan
-from selfdrive.car.honda.values import CruiseButtons, VISUAL_HUD, HONDA_BOSCH, HONDA_NIDEC_ALT_PCM_ACCEL, CarControllerParams
+from selfdrive.car.honda.values import CruiseButtons, VISUAL_HUD, HONDA_BOSCH, HONDA_NIDEC_ALT_PCM_ACCEL, CarControllerParams, CAR
 from selfdrive.controls.lib.drive_helpers import rate_limit
+from common.dp_common import common_controller_ctrl
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 LongCtrlState = car.CarControl.Actuators.LongControlState
@@ -96,10 +97,22 @@ def process_hud_alert(hud_alert):
 
 HUDData = namedtuple("HUDData",
                      ["pcm_accel", "v_cruise", "car",
-                      "lanes", "fcw", "acc_alert", "steer_required"])
+                      "lanes", "fcw", "acc_alert", "steer_required", "dashed_lanes"])
 
 
 class CarController:
+  #dp
+  def rough_speed(self, lead_distance):
+    if self.prev_lead_distance != lead_distance:
+      self.lead_distance_counter_prev = self.lead_distance_counter
+      self.rough_lead_speed += 0.3334 * (
+              (lead_distance - self.prev_lead_distance) / self.lead_distance_counter_prev - self.rough_lead_speed)
+      self.lead_distance_counter = 0.0
+    elif self.lead_distance_counter >= self.lead_distance_counter_prev:
+      self.rough_lead_speed = (self.lead_distance_counter * self.rough_lead_speed) / (self.lead_distance_counter + 1.0)
+    self.lead_distance_counter += 1.0
+    self.prev_lead_distance = lead_distance
+    return self.rough_lead_speed
   def __init__(self, dbc_name, CP, VM):
     self.CP = CP
     self.packer = CANPacker(dbc_name)
@@ -116,8 +129,16 @@ class CarController:
     self.speed = 0
     self.gas = 0
     self.brake = 0
+        # dp
+    self.last_blinker_on = False
+    self.blinker_end_frame = 0.
+    self.prev_lead_distance = 0.0
+    self.stopped_lead_distance = 0.0
+    self.lead_distance_counter = 1
+    self.lead_distance_counter_prev = 1
+    self.rough_lead_speed = 0.0
 
-  def update(self, CC, CS):
+  def update(self, CC, CS, dragonconf):
     actuators = CC.actuators
     hud_control = CC.hudControl
     hud_v_cruise = hud_control.setSpeed * CV.MS_TO_KPH if hud_control.speedVisible else 255
@@ -167,6 +188,18 @@ class CarController:
       if self.frame % 10 == 0:
         can_sends.append((0x18DAB0F1, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", 1))
 
+    # dp
+    blinker_on = CS.out.leftBlinker or CS.out.rightBlinker
+    if not enabled:
+      self.blinker_end_frame = 0
+    if self.last_blinker_on and not blinker_on:
+      self.blinker_end_frame = frame + dragonconf.dpSignalOffDelay
+    apply_steer = common_controller_ctrl(enabled,
+                                         dragonconf,
+                                         blinker_on or frame < self.blinker_end_frame,
+                                         apply_steer, CS.out.vEgo)
+    self.last_blinker_on = blinker_on
+
     # Send steering command.
     idx = self.frame % 4
     can_sends.append(hondacan.create_steering_control(self.packer, apply_steer, CC.latActive, self.CP.carFingerprint,
@@ -203,21 +236,42 @@ class CarController:
       pcm_speed = interp(gas - brake, pcm_speed_BP, pcm_speed_V)
       pcm_accel = int(clip((accel / 1.44) / max_accel, 0.0, 1.0) * 0xc6)
 
-    if not self.CP.openpilotLongitudinalControl:
+    if dragonconf.dpAtl and not dragonconf.dpAtlOpLong:
+      pass
+    elif not self.CP.openpilotLongitudinalControl:
       if self.frame % 2 == 0:
         idx = self.frame // 2
         can_sends.append(hondacan.create_bosch_supplemental_1(self.packer, self.CP.carFingerprint, idx))
       # If using stock ACC, spam cancel command to kill gas when OP disengages.
-      if pcm_cancel_cmd:
+      if not dragonconf.dpAllowGas and pcm_cancel_cmd:
         can_sends.append(hondacan.spam_buttons_command(self.packer, CruiseButtons.CANCEL, idx, self.CP.carFingerprint))
       elif CS.out.cruiseState.standstill:
-        can_sends.append(hondacan.spam_buttons_command(self.packer, CruiseButtons.RES_ACCEL, idx, self.CP.carFingerprint))
+        #can_sends.append(hondacan.spam_buttons_command(self.packer, CruiseButtons.RES_ACCEL, idx, self.CP.carFingerprint))
+        if self.CP.carFingerprint in (CAR.ACCORD, CAR.ACCORDH, CAR.INSIGHT):
+          rough_lead_speed = self.rough_speed(CS.lead_distance)
+          if CS.lead_distance > (self.stopped_lead_distance + 15.0) or rough_lead_speed > 0.1:
+            self.stopped_lead_distance = 0.0
+            can_sends.append(
+              hondacan.spam_buttons_command(self.packer, CruiseButtons.RES_ACCEL, idx, self.CP.carFingerprint))
+        elif self.CP.carFingerprint in (CAR.CIVIC_BOSCH, CAR.CRV_HYBRID):
+          if CS.hud_lead == 1:
+            can_sends.append(hondacan.spam_buttons_command(self.packer, CruiseButtons.RES_ACCEL, idx, self.CP.carFingerprint))
+        else:
+          can_sends.append(hondacan.spam_buttons_command(self.packer, CruiseButtons.RES_ACCEL, idx, self.CP.carFingerprint))
+      else:
+        self.stopped_lead_distance = CS.lead_distance
+        self.prev_lead_distance = CS.lead_distance
 
     else:
       # Send gas and brake commands.
       if self.frame % 2 == 0:
         idx = self.frame // 2
         ts = self.frame * DT_CTRL
+
+        if dragonconf.dpAtl and dragonconf.dpAtlOpLong and not CS.out.cruiseActualEnabled:
+          accel = 0.
+          gas = 0.
+          self.brake_last = 0.
 
         if self.CP.carFingerprint in HONDA_BOSCH:
           self.accel = clip(accel, self.params.BOSCH_ACCEL_MIN, self.params.BOSCH_ACCEL_MAX)
@@ -250,7 +304,9 @@ class CarController:
             can_sends.append(create_gas_interceptor_command(self.packer, self.gas, idx))
 
     # Send dashboard UI commands.
-    if self.frame % 10 == 0:
+    if dragonconf.dpAtl and not dragonconf.dpAtlOpLong:
+      pass
+    elif sefl.frame % 10 == 0:
       idx = (self.frame // 10) % 4
       hud = HUDData(int(pcm_accel), int(round(hud_v_cruise)), hud_car,
                     hud_lanes, fcw_display, acc_alert, steer_required)

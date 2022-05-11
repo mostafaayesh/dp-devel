@@ -231,15 +231,15 @@ def get_car(logcan, sendcan):
     params = Params()
     candidate_changed = params.get('dp_last_candidate', encoding='utf8') != candidate
     # keep stock sr
-    put_nonblocking("dp_sr_stock", str(car_params.steerRatio))
+    put_nonblocking("dp_sr_stock", str(CP.steerRatio))
     dp_sr_custom = params.get("dp_sr_custom", encoding='utf8')
     # reset default sr
     if dp_sr_custom == '' or candidate_changed or (dp_sr_custom != '' and float(dp_sr_custom) <= 9.99):
-      put_nonblocking("dp_sr_custom", str(car_params.steerRatio))
+      put_nonblocking("dp_sr_custom", str(CP.steerRatio))
     # update last candidate
     put_nonblocking('dp_last_candidate', candidate)
 
-    return CarInterface(cp, CarController, CarState), cp
+    return CarInterface(CP, CarController, CarState), CP
   except KeyError:
     put_nonblocking("dp_last_candidate", '')
     put_nonblocking("dp_car_assigned", '')
