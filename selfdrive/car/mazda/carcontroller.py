@@ -3,6 +3,7 @@ from opendbc.can.packer import CANPacker
 from selfdrive.car.mazda import mazdacan
 from selfdrive.car.mazda.values import CarControllerParams, Buttons
 from selfdrive.car import apply_std_steer_torque_limits
+from common.dp_common import common_controller_ctrl
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 
@@ -13,8 +14,11 @@ class CarController():
     self.packer = CANPacker(dbc_name)
     self.steer_rate_limited = False
     self.brake_counter = 0
+    # dp
+    self.last_blinker_on = False
+    self.blinker_end_frame = 0.
 
-  def update(self, c, CS, frame):
+  def update(self, c, CS, frame, dragonconf):
     can_sends = []
 
     apply_steer = 0
@@ -45,6 +49,18 @@ class CarController():
         can_sends.append(mazdacan.create_button_cmd(self.packer, self.CP.carFingerprint, CS.crz_btns_counter, Buttons.CANCEL))
     else:
       self.brake_counter = 0
+
+    # dp
+    blinker_on = CS.out.leftBlinker or CS.out.rightBlinker
+    if not enabled:
+      self.blinker_end_frame = 0
+    if self.last_blinker_on and not blinker_on:
+      self.blinker_end_frame = frame + dragonconf.dpSignalOffDelay
+    apply_steer = common_controller_ctrl(enabled,
+                                         dragonconf,
+                                         blinker_on or frame < self.blinker_end_frame,
+                                         apply_steer, CS.out.vEgo)
+    self.last_blinker_on = blinker_on
 
     self.apply_steer_last = apply_steer
 

@@ -20,6 +20,7 @@ class CarInterface(CarInterfaceBase):
 
     ret.carName = "mazda"
     ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.mazda)]
+    ret.lateralTuning.init('pid')
     ret.radarOffCan = True
 
     ret.dashcamOnly = candidate not in (CAR.CX5_2022, CAR.CX9_2021)
@@ -72,11 +73,18 @@ class CarInterface(CarInterfaceBase):
     ret.tireStiffnessFront, ret.tireStiffnessRear = scale_tire_stiffness(ret.mass, ret.wheelbase, ret.centerToFront,
                                                                          tire_stiffness_factor=tire_stiffness_factor)
 
+    # dp
+    ret = common_interface_get_params_lqr(ret)
+
     return ret
 
   # returns a car.CarState
   def _update(self, c, dragonconf):
     ret = self.CS.update(self.cp, self.cp_cam)
+
+    # dp
+    self.dragonconf = dragonconf
+    ret.cruiseState.enabled = common_interface_atl(ret, dragonconf.dpAtl)
 
     # events
     events = self.create_common_events(ret)
@@ -91,6 +99,6 @@ class CarInterface(CarInterfaceBase):
     return ret
 
   def apply(self, c):
-    ret = self.CC.update(c, self.CS, self.frame)
+    ret = self.CC.update(c, self.CS, self.frame, self.dragonconf)
     self.frame += 1
     return ret

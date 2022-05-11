@@ -6,12 +6,16 @@ from opendbc.can.packer import CANPacker
 from selfdrive.car import apply_std_steer_torque_limits
 from selfdrive.car.gm import gmcan
 from selfdrive.car.gm.values import DBC, CanBus, CarControllerParams
+from common.dp_common import common_controller_ctrl
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 
 
 class CarController:
   def __init__(self, dbc_name, CP, VM):
+    # dp
+    self.last_blinker_on = False
+    self.blinker_end_frame = 0.
     self.start_time = 0.
     self.apply_steer_last = 0
     self.apply_gas = 0
@@ -28,7 +32,7 @@ class CarController:
     self.packer_obj = CANPacker(DBC[CP.carFingerprint]['radar'])
     self.packer_ch = CANPacker(DBC[CP.carFingerprint]['chassis'])
 
-  def update(self, CC, CS):
+  def update(self, CC, CS, dragonconf):
     actuators = CC.actuators
     hud_control = CC.hudControl
     hud_alert = hud_control.visualAlert
@@ -52,6 +56,18 @@ class CarController:
         self.steer_rate_limited = new_steer != apply_steer
       else:
         apply_steer = 0
+
+      # dp
+      blinker_on = CS.out.leftBlinker or CS.out.rightBlinker
+      if not enabled:
+        self.blinker_end_frame = 0
+      if self.last_blinker_on and not blinker_on:
+        self.blinker_end_frame = frame + dragonconf.dpSignalOffDelay
+      apply_steer = common_controller_ctrl(enabled,
+                                           dragonconf,
+                                           blinker_on or frame < self.blinker_end_frame,
+                                           apply_steer, CS.out.vEgo)
+      self.last_blinker_on = blinker_on
 
       self.apply_steer_last = apply_steer
       # GM EPS faults on any gap in received message counters. To handle transient OP/Panda safety sync issues at the

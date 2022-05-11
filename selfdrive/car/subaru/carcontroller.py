@@ -2,6 +2,7 @@ from selfdrive.car import apply_std_steer_torque_limits
 from selfdrive.car.subaru import subarucan
 from selfdrive.car.subaru.values import DBC, PREGLOBAL_CARS, CarControllerParams
 from opendbc.can.packer import CANPacker
+from common.dp_common import common_controller_ctrl
 
 
 class CarController():
@@ -12,11 +13,14 @@ class CarController():
     self.es_lkas_cnt = -1
     self.cruise_button_prev = 0
     self.steer_rate_limited = False
+    # dp
+    self.last_blinker_on = False
+    self.blinker_end_frame = 0.
 
     self.p = CarControllerParams(CP)
     self.packer = CANPacker(DBC[CP.carFingerprint]['pt'])
 
-  def update(self, c, CS, frame, actuators, pcm_cancel_cmd, visual_alert, left_line, right_line, left_lane_depart, right_lane_depart):
+  def update(self, c, CS, frame, actuators, pcm_cancel_cmd, visual_alert, left_line, right_line, left_lane_depart, right_lane_depart, dragonconf):
 
     can_sends = []
 
@@ -33,6 +37,18 @@ class CarController():
 
       if not c.latActive:
         apply_steer = 0
+
+      # dp
+      blinker_on = CS.out.leftBlinker or CS.out.rightBlinker
+      if not enabled:
+        self.blinker_end_frame = 0
+      if self.last_blinker_on and not blinker_on:
+        self.blinker_end_frame = frame + dragonconf.dpSignalOffDelay
+      apply_steer = common_controller_ctrl(enabled,
+                                           dragonconf,
+                                           blinker_on or frame < self.blinker_end_frame,
+                                           apply_steer, CS.out.vEgo)
+      self.last_blinker_on = blinker_on
 
       if self.CP.carFingerprint in PREGLOBAL_CARS:
         can_sends.append(subarucan.create_preglobal_steering_control(self.packer, apply_steer, frame, self.p.STEER_STEP))

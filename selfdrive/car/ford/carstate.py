@@ -49,6 +49,9 @@ class CarState(CarStateBase):
     ret.cruiseState.enabled = cp.vl["EngBrakeData"]["CcStat_D_Actl"] in (4, 5)
     ret.cruiseState.available = cp.vl["EngBrakeData"]["CcStat_D_Actl"] in (3, 4, 5)
 
+    # dp
+    ret.cruiseActualEnabled = ret.cruiseState.enabled
+
     # gear
     if self.CP.transmissionType == TransmissionType.automatic:
       gear = int(cp.vl["Gear_Shift_by_Wire_FD1"]["TrnGear_D_RqDrv"])
@@ -82,6 +85,9 @@ class CarState(CarStateBase):
     # Stock values from IPMA so that we can retain some stock functionality
     self.acc_tja_status_stock_values = cp_cam.vl["ACCDATA_3"]
     self.lkas_status_stock_values = cp_cam.vl["IPMA_Data"]
+
+    # dp - brake lights
+    ret.brakeLights = ret.brakePressed
 
     return ret
 

@@ -12,6 +12,7 @@ class CarInterface(CarInterfaceBase):
     ret = CarInterfaceBase.get_std_params(candidate, fingerprint)
     ret.carName = "nissan"
     ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.nissan)]
+    ret.lateralTuning.init('pid')
 
     ret.steerLimitTimer = 1.0
     ret.steerRateCost = 0.5
@@ -47,11 +48,18 @@ class CarInterface(CarInterfaceBase):
     # mass and CG position, so all cars will have approximately similar dyn behaviors
     ret.tireStiffnessFront, ret.tireStiffnessRear = scale_tire_stiffness(ret.mass, ret.wheelbase, ret.centerToFront)
 
+    # dp
+    ret = common_interface_get_params_lqr(ret)
+
     return ret
 
   # returns a car.CarState
   def _update(self, c, dragonconf):
     ret = self.CS.update(self.cp, self.cp_adas, self.cp_cam)
+
+    # dp
+    self.dragonconf = dragonconf
+    ret.cruiseState.enabled = common_interface_atl(ret, dragonconf.dpAtl)
 
     buttonEvents = []
     be = car.CarState.ButtonEvent.new_message()
@@ -72,6 +80,6 @@ class CarInterface(CarInterfaceBase):
     ret = self.CC.update(c, self.CS, self.frame, c.actuators,
                          c.cruiseControl.cancel, hud_control.visualAlert,
                          hud_control.leftLaneVisible, hud_control.rightLaneVisible,
-                         hud_control.leftLaneDepart, hud_control.rightLaneDepart)
+                         hud_control.leftLaneDepart, hud_control.rightLaneDepart, self.dragonconf)
     self.frame += 1
     return ret
