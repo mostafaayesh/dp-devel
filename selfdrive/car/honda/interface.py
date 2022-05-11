@@ -352,7 +352,7 @@ class CarInterface(CarInterfaceBase):
     ret.steerLimitTimer = 0.8
 
     #dp
-    if Params().get('dp_honda_eps_mod') == b'1':
+    if Params().get_bool('dp_honda_eps_mod') == b'1':
       if candidate == CAR.CIVIC:
         # tuned by a-tao
         ret.lateralParams.torqueBP, ret.lateralParams.torqueV = [[0, 4096, 8000], [0, 4096, 4096]]
