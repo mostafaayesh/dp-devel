@@ -3,8 +3,6 @@ from cereal import car
 from selfdrive.car.chrysler.values import CAR
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
 from selfdrive.car.interfaces import CarInterfaceBase
-from common.dp_common import common_interface_atl, common_interface_get_params_lqr
-from common.params import Params
 
 
 class CarInterface(CarInterfaceBase):
@@ -13,7 +11,6 @@ class CarInterface(CarInterfaceBase):
     ret = CarInterfaceBase.get_std_params(candidate, fingerprint)
     ret.carName = "chrysler"
     ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.chrysler)]
-    ret.lateralTuning.init('pid')
 
     # Speed conversion:              20, 45 mph
     ret.wheelbase = 3.089  # in meters for Pacifica Hybrid 2017
@@ -47,20 +44,12 @@ class CarInterface(CarInterfaceBase):
 
     ret.enableBsm = 720 in fingerprint[0]
 
-    # dp
-    if Params().get_bool('dp_lqr'):
-      set_lat_tune(ret.lateralTuning, LatTunes.LQR_RAV4)
-    ret = common_interface_get_params_lqr(ret)
-
     return ret
 
   # returns a car.CarState
-  def _update(self, c, dragonconf):
+  def _update(self, c):
     ret = self.CS.update(self.cp, self.cp_cam)
 
-    # dp
-    self.dragonconf = dragonconf
-    ret.cruiseState.enabled = common_interface_atl(ret, dragonconf.dpAtl)
 
     ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
 
@@ -77,4 +66,4 @@ class CarInterface(CarInterfaceBase):
   # pass in a car.CarControl
   # to be called @ 100hz
   def apply(self, c):
-    return self.CC.update(c, self.CS, self.dragonconf)
+    return self.CC.update(c, self.CS)

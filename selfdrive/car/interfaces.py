@@ -117,7 +117,7 @@ class CarInterfaceBase(ABC):
         cp.update_strings(can_strings)
 
     # get CarState
-    ret = self._update(c)
+    ret = self._update(c, dragonconf)
 
     ret.canValid = all(cp.can_valid for cp in self.can_parsers if cp is not None)
     ret.canTimeout = any(cp.bus_timeout for cp in self.can_parsers if cp is not None)

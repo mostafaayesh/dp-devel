@@ -8,6 +8,7 @@ from selfdrive.car import STD_CARGO_KG, CivicParams, scale_rot_inertia, scale_ti
 from selfdrive.car.interfaces import CarInterfaceBase
 from selfdrive.car.disable_ecu import disable_ecu
 from common.dp_common import common_interface_atl, common_interface_get_params_lqr
+from common.params import Params
 
 
 ButtonType = car.CarState.ButtonEvent.Type
