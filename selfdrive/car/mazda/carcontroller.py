@@ -46,19 +46,6 @@ class CarController():
     else:
       self.brake_counter = 0
 
-    # dp
-    blinker_on = CS.out.leftBlinker or CS.out.rightBlinker
-    if not CC.enabled:
-      self.blinker_end_frame = 0
-    if self.last_blinker_on and not blinker_on:
-      self.blinker_end_frame = self.frame + dragonconf.dpSignalOffDelay
-    apply_steer = common_controller_ctrl(CC.enabled,
-                                         dragonconf,
-                                         blinker_on or self.frame < self.blinker_end_frame,
-                                         apply_steer, CS.out.vEgo)
-    self.last_blinker_on = blinker_on
-    self.apply_steer_last = apply_steer
-
     # send HUD alerts
     if frame % 50 == 0:
       ldw = c.hudControl.visualAlert == VisualAlert.ldw

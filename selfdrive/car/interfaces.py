@@ -107,7 +107,7 @@ class CarInterfaceBase(ABC):
     return ret
 
   @abstractmethod
-  def _update(self, c: car.CarControl) -> car.CarState:
+  def _update(self, c: car.CarControl, dragonconf) -> car.CarState:
     pass
 
   def update(self, c: car.CarControl, can_strings: List[bytes], dragonconf) -> car.CarState:

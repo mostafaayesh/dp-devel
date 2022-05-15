@@ -394,13 +394,13 @@ class CarInterface(CarInterfaceBase):
     if self.CS.CP.carFingerprint in HONDA_BOSCH:
       # do nothing if voacc is on
       if not self.CS.CP.openpilotLongitudinalControl:
-         ret.brakeLights = bool(self.CS.brake_switch or
+        ret.brakeLights = bool(self.CS.brake_switch or
                                 self.CS.brake_lights or self.CS.user_brake > 0.)
       else:
         ret.brakeLights = bool(self.CS.brake_switch or self.CS.user_brake > 0.)
     else:
-     brakelights_threshold = -0.02 if self.CS.CP.carFingerprint == CAR.CIVIC else -0.1
-     ret.brakeLights = bool(self.CS.brake_switch or
+      brakelights_threshold = -0.02 if self.CS.CP.carFingerprint == CAR.CIVIC else -0.1
+      ret.brakeLights = bool(self.CS.brake_switch or
                             c.actuators.accel < brakelights_threshold)
 
     buttonEvents = []
