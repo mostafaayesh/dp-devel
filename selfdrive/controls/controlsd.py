@@ -760,7 +760,7 @@ class Controls:
     lat_tuning = self.CP.lateralTuning.which()
     # dp - for ui
     controlsState.angleSteers = CS.steeringAngleDeg
-    controlsState.steeringAngleDesiredDeg = actuators.steeringAngleDeg
+    controlsState.steeringAngleDesiredDeg = CS.steeringAngleDeg
 
     if self.joystick_mode:
       controlsState.lateralControlState.debugState = lac_log
