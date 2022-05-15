@@ -7,7 +7,7 @@ from selfdrive.car.hyundai.radar_interface import RADAR_START_ADDR
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
 from selfdrive.car.interfaces import CarInterfaceBase
 from selfdrive.car.disable_ecu import disable_ecu
-from common.dp_common import common_interface_atl, common_interface_get_params_lqr
+from common.dp_common import common_interface_atl#, common_interface_get_params_lqr
 from common.params import Params
 
 ButtonType = car.CarState.ButtonEvent.Type
@@ -312,7 +312,7 @@ class CarInterface(CarInterfaceBase):
     # dp
     #if Params().get_bool('dp_hkg_smart_mdps'):
     #  ret.minSteerSpeed = 0.
-    ret = common_interface_get_params_lqr(ret)
+    #ret = common_interface_get_params_lqr(ret)
 
     if Params().get('dp_lqr') == b'1' and candidate in [CAR.IONIQ]:
       ret.lateralTuning.init('lqr')

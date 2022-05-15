@@ -6,7 +6,7 @@ from common.conversions import Conversions as CV
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
 from selfdrive.car.gm.values import CAR, CruiseButtons, CarControllerParams
 from selfdrive.car.interfaces import CarInterfaceBase
-from common.dp_common import common_interface_atl, common_interface_get_params_lqr
+from common.dp_common import common_interface_atl#, common_interface_get_params_lqr
 
 ButtonType = car.CarState.ButtonEvent.Type
 EventName = car.CarEvent.EventName
@@ -154,7 +154,7 @@ class CarInterface(CarInterfaceBase):
     ret.radarTimeStep = 0.0667  # GM radar runs at 15Hz instead of standard 20Hz
 
     # dp
-    ret = common_interface_get_params_lqr(ret)
+    #ret = common_interface_get_params_lqr(ret)
 
     return ret
 

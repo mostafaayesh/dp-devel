@@ -2,7 +2,7 @@ from cereal import car
 from selfdrive.car.volkswagen.values import CAR, BUTTON_STATES, CANBUS, NetworkLocation, TransmissionType, GearShifter
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
 from selfdrive.car.interfaces import CarInterfaceBase
-from common.dp_common import common_interface_atl, common_interface_get_params_lqr
+from common.dp_common import common_interface_atl#, common_interface_get_params_lqr
 
 EventName = car.CarEvent.EventName
 
@@ -160,7 +160,7 @@ class CarInterface(CarInterfaceBase):
                                                                          tire_stiffness_factor=tire_stiffness_factor)
 
         # dp
-    ret = common_interface_get_params_lqr(ret)
+    #ret = common_interface_get_params_lqr(ret)
 
     return ret
 

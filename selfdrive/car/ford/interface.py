@@ -4,7 +4,7 @@ from common.conversions import Conversions as CV
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint
 from selfdrive.car.ford.values import TransmissionType, CAR
 from selfdrive.car.interfaces import CarInterfaceBase
-from common.dp_common import common_interface_atl, common_interface_get_params_lqr
+from common.dp_common import common_interface_atl#, common_interface_get_params_lqr
 
 
 EventName = car.CarEvent.EventName
@@ -27,7 +27,7 @@ class CarInterface(CarInterfaceBase):
     ret.steerLimitTimer = 1.0
 
     # dp
-    ret = common_interface_get_params_lqr(ret)
+    #ret = common_interface_get_params_lqr(ret)
 
     # TODO: detect stop-and-go vehicles
     stop_and_go = False

@@ -6,7 +6,7 @@ from selfdrive.car.toyota.tunes import LatTunes, LongTunes, set_long_tune, set_l
 from selfdrive.car.toyota.values import Ecu, CAR, ToyotaFlags, TSS2_CAR, RADAR_ACC_CAR, NO_DSU_CAR, MIN_ACC_SPEED, EPS_SCALE, EV_HYBRID_CAR, CarControllerParams
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
 from selfdrive.car.interfaces import CarInterfaceBase
-from common.dp_common import common_interface_atl, common_interface_get_params_lqr
+from common.dp_common import common_interface_atl#, common_interface_get_params_lqr
 from common.params import Params
 
 EventName = car.CarEvent.EventName
@@ -294,7 +294,7 @@ class CarInterface(CarInterfaceBase):
       set_long_tune(ret.longitudinalTuning, LongTunes.TSS)
 
     # dp
-    ret = common_interface_get_params_lqr(ret)
+    #ret = common_interface_get_params_lqr(ret)
     if candidate == CAR.PRIUS and Params().get_bool('dp_toyota_zss'):
       ret.mass = 3370. * CV.LB_TO_KG + STD_CARGO_KG
       ret.lateralTuning.indi.timeConstantV = [0.1]
