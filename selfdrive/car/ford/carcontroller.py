@@ -3,7 +3,6 @@ from common.numpy_fast import clip, interp
 from selfdrive.car.ford import fordcan
 from selfdrive.car.ford.values import CarControllerParams
 from opendbc.can.packer import CANPacker
-from common.dp_common import common_controller_ctrl
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 
@@ -33,7 +32,7 @@ class CarController():
     self.last_blinker_on = False
     self.blinker_end_frame = 0.
 
-  def update(self, CC, CS, frame, dragonconf):
+  def update(self, CC, CS, frame):
     can_sends = []
 
     actuators = CC.actuators
@@ -50,18 +49,6 @@ class CarController():
     new_steer = actuators.steeringAngleDeg
     apply_steer = apply_ford_steer_angle_limits(new_steer, self.apply_steer_last, CS.out.vEgo)
     self.steer_rate_limited = new_steer != apply_steer
-
-    # dp
-    blinker_on = CS.out.leftBlinker or CS.out.rightBlinker
-    if not CC.enabled:
-      self.blinker_end_frame = 0
-    if self.last_blinker_on and not blinker_on:
-      self.blinker_end_frame = self.frame + dragonconf.dpSignalOffDelay
-    apply_steer = common_controller_ctrl(CC.enabled,
-                                         dragonconf,
-                                         blinker_on or self.frame < self.blinker_end_frame,
-                                         apply_steer, CS.out.vEgo)
-    self.last_blinker_on = blinker_on
 
 
     # send steering commands at 20Hz
