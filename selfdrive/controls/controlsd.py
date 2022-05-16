@@ -200,6 +200,7 @@ class Controls:
     self.sm['dragonConf'].dpAtl = False
     self.sm['dragonConf'].dpSrCustom = self.CP.steerRatio
     self.sm['dragonConf'].dpSrLearner = True
+    self.sm['dragonConf'].dpAccelProfile = True
 
   def update_events(self, CS):
     """Compute carEvents from carState"""

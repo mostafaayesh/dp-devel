@@ -95,7 +95,7 @@ class Plant():
     sm = {'radarState': radar.radarState,
           'carState': car_state.carState,
           'controlsState': control.controlsState}
-    self.planner.update(sm, dragonConf)
+    self.planner.update(sm)
     self.speed = self.planner.v_desired_filter.x
     self.acceleration = self.planner.a_desired
     fcw = self.planner.fcw
