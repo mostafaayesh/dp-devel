@@ -337,7 +337,7 @@ class CarState(CarStateBase):
       ("FORCE", "PRE_COLLISION"),
       ("PRECOLLISION_ACTIVE", "PRE_COLLISION"),
       #dp
-      ("DISTANCE", "ACC_CONTROL"),
+      ("DISTANCE", "ACC_CONTROL", 0),
       #("SET_ME_X01", "LKAS_HUD"),
     ]
 
