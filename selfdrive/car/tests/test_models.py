@@ -87,7 +87,6 @@ class TestCarModel(unittest.TestCase):
       raise Exception(f"Route: {repr(cls.test_route.route)} with segments: {test_segs} not found or no CAN msgs found. Is it uploaded?")
 
     cls.can_msgs = sorted(can_msgs, key=lambda msg: msg.logMonoTime)
-    sm = messaging.SubMaster(['dragonConf'])
     cls.CarInterface, cls.CarController, cls.CarState = interfaces[cls.car_model]
     cls.CP = cls.CarInterface.get_params(cls.car_model, fingerprint, [], disable_radar)
     assert cls.CP
@@ -125,9 +124,11 @@ class TestCarModel(unittest.TestCase):
   def test_car_interface(self):
     # TODO: also check for checkusm and counter violations from can parser
     can_invalid_cnt = 0
+    sm = messaging.SubMaster(['dragonConf'])
     CC = car.CarControl.new_message()
 
     for i, msg in enumerate(self.can_msgs):
+      sm.update(0)
       CS = self.CI.update(CC, sm['dragonConf'], (msg.as_builder().to_bytes(),))
       self.CI.apply(CC)
 
@@ -192,7 +193,7 @@ class TestCarModel(unittest.TestCase):
       for msg in can_capnp_to_can_list(can.can, src_filter=range(64)):
         to_send = package_can_msg(msg)
         self.safety.safety_rx_hook(to_send)
-        self.CI.update(CC, sm['dragonConf'], (can_list_to_can_capnp([msg, ]), ))
+        self.CI.update(CC, (can_list_to_can_capnp([msg, ]), ))
 
     if not self.CP.pcmCruise:
       self.safety.set_controls_allowed(0)
