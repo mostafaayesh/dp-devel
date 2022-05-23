@@ -65,7 +65,7 @@ class LateralPlanner:
 
     # Calculate final driving path and set MPC costs
     if not self.get_dlp_laneless_mode():
-      d_path_xyz = self.d_path_w_lines_xyz
+      #d_path_xyz = self.d_path_w_lines_xyz
       self.lat_mpc.set_weights(MPC_COST_LAT.PATH, MPC_COST_LAT.HEADING, self.steer_rate_cost)
       self.laneless_mode_is_e2e = False
     else:
