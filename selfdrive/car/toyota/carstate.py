@@ -35,7 +35,7 @@ class CarState(CarStateBase):
     # dp
     #self.read_distance_lines = 0
     #self.read_distance_lines_init = False
-    #self.distance = 0
+    self.distance = 0
     #self.read_lkas_btn = 0
     #self.read_lkas_btn_init = False
 
@@ -318,6 +318,10 @@ class CarState(CarStateBase):
 
     if Params().get('dp_toyota_zss') == b'1':
       signals += [("ZORRO_STEER", "SECONDARY_STEER_ANGLE")]
+
+    if CP.carFingerprint in TSS2_CAR:
+      signals.append(("DISTANCE_LINES", "PCM_CRUISE_SM", 0))
+      checks.append(("PCM_CRUISE_SM", 1))
 
     if CP.carFingerprint in RADAR_ACC_CAR:
       signals += [
