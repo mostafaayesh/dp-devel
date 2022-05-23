@@ -129,7 +129,7 @@ class TestCarModel(unittest.TestCase):
 
     for i, msg in enumerate(self.can_msgs):
       sm.update(0)
-      CS = self.CI.update(CC, sm['dragonConf'], (msg.as_builder().to_bytes(),))
+      CS = self.CI.update(CC, (msg.as_builder().to_bytes(),), sm['dragonConf'])
       self.CI.apply(CC)
 
       # wait 2s for low frequency msgs to be seen
@@ -193,7 +193,7 @@ class TestCarModel(unittest.TestCase):
       for msg in can_capnp_to_can_list(can.can, src_filter=range(64)):
         to_send = package_can_msg(msg)
         self.safety.safety_rx_hook(to_send)
-        self.CI.update(CC, (can_list_to_can_capnp([msg, ]), ))
+        self.CI.update(CC, (can_list_to_can_capnp([msg, ]), ), sm['dragonConf'])
 
     if not self.CP.pcmCruise:
       self.safety.set_controls_allowed(0)

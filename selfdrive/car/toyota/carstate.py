@@ -337,7 +337,7 @@ class CarState(CarStateBase):
       ("FORCE", "PRE_COLLISION"),
       ("PRECOLLISION_ACTIVE", "PRE_COLLISION"),
       #dp
-      ("DISTANCE", "ACC_CONTROL", 0),
+      #("DISTANCE", "ACC_CONTROL", 0),
       #("SET_ME_X01", "LKAS_HUD"),
     ]
 
@@ -356,5 +356,7 @@ class CarState(CarStateBase):
         ("ACC_CONTROL", 33),
         ("ACC_HUD", 1),
       ]
+
+      signals.append(("DISTANCE", "ACC_CONTROL", 0))
 
     return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, 2)
