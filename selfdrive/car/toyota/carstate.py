@@ -172,6 +172,10 @@ class CarState(CarStateBase):
     elif self.CP.carFingerprint in TSS2_CAR:
       self.acc_type = cp_cam.vl["ACC_CONTROL"]["ACC_TYPE"]
       ret.stockFcw = bool(cp_cam.vl["ACC_HUD"]["FCW"])
+    # dp
+    # distance button
+      self.distance = 1 if cp_cam.vl["ACC_CONTROL"]["DISTANCE"] == 1 else 0
+      ret.distanceLines = cp.vl["PCM_CRUISE_SM"]["DISTANCE_LINES"]
 
     # some TSS2 cars have low speed lockout permanently set, so ignore on those cars
     # these cars are identified by an ACC_TYPE value of 2.
@@ -203,11 +207,6 @@ class CarState(CarStateBase):
     if self.CP.enableBsm:
       ret.leftBlindspot = (cp.vl["BSM"]["L_ADJACENT"] == 1) or (cp.vl["BSM"]["L_APPROACHING"] == 1)
       ret.rightBlindspot = (cp.vl["BSM"]["R_ADJACENT"] == 1) or (cp.vl["BSM"]["R_APPROACHING"] == 1)
-
-    # dp
-    # distance button
-    self.distance = 1 if cp_cam.vl["ACC_CONTROL"]["DISTANCE"] == 1 else 0
-    ret.distanceLines = cp.vl["PCM_CRUISE_SM"]["DISTANCE_LINES"]
 
     return ret
 
@@ -245,7 +244,7 @@ class CarState(CarStateBase):
       #dp
       ("SPORT_ON", "GEAR_PACKET"),
       ("ECON_ON", "GEAR_PACKET"),
-      ("DISTANCE_LINES", "PCM_CRUISE_SM"),
+      #("DISTANCE_LINES", "PCM_CRUISE_SM"),
       ("RPM", "ENGINE_RPM"),
       ("BRAKE_LIGHTS_ACC", "ESP_CONTROL"),
     ]
