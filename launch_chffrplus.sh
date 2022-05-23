@@ -234,7 +234,8 @@ function launch {
     fi
     ./build.py && ./manager.py
   else
-    ./custom_dep.py && ./build.py && ./manager.py
+    ./build.py && ./manager.py
+    #./custom_dep.py && ./build.py && ./manager.py
   fi
 
   # if broken, keep on screen error
