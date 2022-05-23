@@ -105,7 +105,8 @@ class Planner:
 
     # dp
     self.dp_accel_profile_ctrl = sm['dragonConf'].dpAccelProfileCtrl
-    self.dp_accel_profile = sm['dragonConf'].dpAccelProfile
+    if self.dp_accel_profile_ctrl:
+      self.dp_accel_profile = sm['dragonConf'].dpAccelProfile
     #self.dp_following_profile_ctrl = sm['dragonConf'].dpFollowingProfileCtrl
     #if self.dp_following_profile_ctrl:
     #  self.dp_following_profile = sm['dragonConf'].dpFollowingProfile
