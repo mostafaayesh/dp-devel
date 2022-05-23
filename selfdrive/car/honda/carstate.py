@@ -129,7 +129,7 @@ def get_can_signals(CP, gearbox_msg, main_on_sig_msg):
 
   # dp - add lead distance to accord, accord h, insight
   if CP.carFingerprint in (CAR.ACCORD, CAR.ACCORDH, CAR.INSIGHT):
-    signals += [("LEAD_DISTANCE", "RADAR_HUD", 0)]
+    signals += [("LEAD_DISTANCE", "RADAR_HUD")]
 
   if CP.carFingerprint == CAR.CIVIC:
     signals += [("IMPERIAL_UNIT", "HUD_SETTING"),
