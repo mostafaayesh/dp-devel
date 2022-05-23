@@ -21,6 +21,7 @@ from tools.lib.logreader import LogReader
 
 from panda.tests.safety import libpandasafety_py
 from panda.tests.safety.common import package_can_msg
+import cereal.messaging as messaging
 
 PandaType = log.PandaState.PandaType
 
@@ -86,7 +87,7 @@ class TestCarModel(unittest.TestCase):
       raise Exception(f"Route: {repr(cls.test_route.route)} with segments: {test_segs} not found or no CAN msgs found. Is it uploaded?")
 
     cls.can_msgs = sorted(can_msgs, key=lambda msg: msg.logMonoTime)
-
+    sm = messaging.SubMaster(['dragonConf'])
     cls.CarInterface, cls.CarController, cls.CarState = interfaces[cls.car_model]
     cls.CP = cls.CarInterface.get_params(cls.car_model, fingerprint, [], disable_radar)
     assert cls.CP
