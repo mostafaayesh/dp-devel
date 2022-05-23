@@ -14,7 +14,7 @@ from selfdrive.swaglog import cloudlog
 import cereal.messaging as messaging
 from selfdrive.car import gen_empty_fingerprint
 import selfdrive.sentry as sentry
-
+from common.travis_checker import travis
 from cereal import car
 EventName = car.CarEvent.EventName
 
@@ -211,12 +211,13 @@ def get_car(logcan, sendcan):
   if candidate is None:
     cloudlog.warning("car doesn't match any fingerprints: %r", fingerprints)
     candidate = "mock"
+    if not travis:
+      y = threading.Thread(target=crash_log2, args=(fingerprints,car_fw,))
+      y.start()
 
-    y = threading.Thread(target=crash_log2, args=(fingerprints,car_fw,))
-    y.start()
-
-  x = threading.Thread(target=crash_log, args=(candidate,))
-  x.start()
+  if not travis:
+    x = threading.Thread(target=crash_log, args=(candidate,))
+    x.start()
 
   disable_radar = Params().get_bool("DisableRadar")
 
