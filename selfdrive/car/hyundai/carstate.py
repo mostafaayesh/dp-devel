@@ -52,6 +52,8 @@ class CarState(CarStateBase):
       50, cp.vl["CGW1"]["CF_Gway_TurnSigLh"], cp.vl["CGW1"]["CF_Gway_TurnSigRh"])
     ret.steeringTorque = cp.vl["MDPS12"]["CR_Mdps_StrColTq"]
     ret.steeringTorqueEps = cp.vl["MDPS12"]["CR_Mdps_OutTq"]
+    #dp
+    ret.engineRPM = cp.vl["TCU_DCT13"]['Cluster_Engine_RPM']
     ret.steeringPressed = abs(ret.steeringTorque) > STEER_THRESHOLD
     ret.steerFaultTemporary = cp.vl["MDPS12"]["CF_Mdps_ToiUnavail"] != 0 or cp.vl["MDPS12"]["CF_Mdps_ToiFlt"] != 0
 
@@ -67,6 +69,9 @@ class CarState(CarStateBase):
       ret.cruiseState.standstill = cp.vl["SCC11"]["SCCInfoDisplay"] == 4.
       speed_conv = CV.MPH_TO_MS if cp.vl["CLU11"]["CF_Clu_SPEED_UNIT"] else CV.KPH_TO_MS
       ret.cruiseState.speed = cp.vl["SCC11"]["VSetDis"] * speed_conv
+
+    # dp
+    ret.cruiseActualEnabled = ret.cruiseState.enabled
 
     # TODO: Find brake pressure
     ret.brake = 0
@@ -117,6 +122,9 @@ class CarState(CarStateBase):
     self.prev_cruise_buttons = self.cruise_buttons[-1]
     self.cruise_buttons.extend(cp.vl_all["CLU11"]["CF_Clu_CruiseSwState"])
     self.main_buttons.extend(cp.vl_all["CLU11"]["CF_Clu_CruiseSwMain"])
+
+    # dp - brake lights
+    ret.brakeLights = ret.brakePressed
 
     return ret
 
@@ -174,6 +182,8 @@ class CarState(CarStateBase):
 
       ("SAS_Angle", "SAS11"),
       ("SAS_Speed", "SAS11"),
+      #dp
+      ("Cluster_Engine_RPM", "TCU_DCT13"),
     ]
 
     checks = [
@@ -188,6 +198,7 @@ class CarState(CarStateBase):
       ("CGW4", 5),
       ("WHL_SPD11", 50),
       ("SAS11", 100),
+      ("TCU_DCT13", 100),
     ]
 
     if not CP.openpilotLongitudinalControl:

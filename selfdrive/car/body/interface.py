@@ -37,7 +37,7 @@ class CarInterface(CarInterfaceBase):
 
     return ret
 
-  def _update(self, c):
+  def _update(self, c, dragonconf):
     ret = self.CS.update(self.cp)
 
     # wait for everything to init first

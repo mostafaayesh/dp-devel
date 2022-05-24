@@ -59,9 +59,9 @@ procs = [
   PythonProcess("androidd", "selfdrive.hardware.eon.androidd", enabled=EON, offroad=True),
 
    # dp
-  PythonProcess("systemd", "selfdrive.dragonpilot.systemd", persistent=True),
+  PythonProcess("systemd", "selfdrive.dragonpilot.systemd", offroad=True),
   PythonProcess("gpxd", "selfdrive.dragonpilot.gpxd"),
-  PythonProcess("otisserv", "selfdrive.dragonpilot.otisserv", persistent=True),
+  PythonProcess("otisserv", "selfdrive.dragonpilot.otisserv", offroad=True),
 
   # Experimental
   PythonProcess("rawgpsd", "selfdrive.sensord.rawgps.rawgpsd", enabled=os.path.isfile("/persist/comma/use-quectel-rawgps")),

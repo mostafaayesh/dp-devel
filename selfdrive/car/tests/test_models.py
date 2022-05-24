@@ -21,6 +21,7 @@ from tools.lib.logreader import LogReader
 
 from panda.tests.safety import libpandasafety_py
 from panda.tests.safety.common import package_can_msg
+import cereal.messaging as messaging
 
 PandaType = log.PandaState.PandaType
 
@@ -86,7 +87,6 @@ class TestCarModel(unittest.TestCase):
       raise Exception(f"Route: {repr(cls.test_route.route)} with segments: {test_segs} not found or no CAN msgs found. Is it uploaded?")
 
     cls.can_msgs = sorted(can_msgs, key=lambda msg: msg.logMonoTime)
-
     cls.CarInterface, cls.CarController, cls.CarState = interfaces[cls.car_model]
     cls.CP = cls.CarInterface.get_params(cls.car_model, fingerprint, [], disable_radar)
     assert cls.CP
@@ -124,10 +124,12 @@ class TestCarModel(unittest.TestCase):
   def test_car_interface(self):
     # TODO: also check for checkusm and counter violations from can parser
     can_invalid_cnt = 0
+    sm = messaging.SubMaster(['dragonConf'])
     CC = car.CarControl.new_message()
 
     for i, msg in enumerate(self.can_msgs):
-      CS = self.CI.update(CC, (msg.as_builder().to_bytes(),))
+      sm.update(0)
+      CS = self.CI.update(CC, (msg.as_builder().to_bytes(),), sm['dragonConf'])
       self.CI.apply(CC)
 
       # wait 2s for low frequency msgs to be seen
@@ -185,13 +187,15 @@ class TestCarModel(unittest.TestCase):
       self.skipTest("no need to check panda safety for dashcamOnly")
 
     CC = car.CarControl.new_message()
+    sm = messaging.SubMaster(['dragonConf'])
 
     # warm up pass, as initial states may be different
     for can in self.can_msgs[:300]:
       for msg in can_capnp_to_can_list(can.can, src_filter=range(64)):
         to_send = package_can_msg(msg)
         self.safety.safety_rx_hook(to_send)
-        self.CI.update(CC, (can_list_to_can_capnp([msg, ]), ))
+        sm.update(0)
+        self.CI.update(CC, (can_list_to_can_capnp([msg, ]), ), sm['dragonConf'])
 
     if not self.CP.pcmCruise:
       self.safety.set_controls_allowed(0)
@@ -200,7 +204,8 @@ class TestCarModel(unittest.TestCase):
     CS_prev = car.CarState.new_message()
     checks = defaultdict(lambda: 0)
     for can in self.can_msgs:
-      CS = self.CI.update(CC, (can.as_builder().to_bytes(), ))
+      sm.update(0)
+      CS = self.CI.update(CC, (can.as_builder().to_bytes(), ), sm['dragonConf'])
       for msg in can_capnp_to_can_list(can.can, src_filter=range(64)):
         to_send = package_can_msg(msg)
         ret = self.safety.safety_rx_hook(to_send)

@@ -2,6 +2,7 @@ from cereal import car
 from selfdrive.car.volkswagen.values import CAR, BUTTON_STATES, CANBUS, NetworkLocation, TransmissionType, GearShifter
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
 from selfdrive.car.interfaces import CarInterfaceBase
+from common.dp_common import common_interface_atl#, common_interface_get_params_lqr
 
 EventName = car.CarEvent.EventName
 
@@ -157,6 +158,10 @@ class CarInterface(CarInterfaceBase):
     ret.centerToFront = ret.wheelbase * 0.45
     ret.tireStiffnessFront, ret.tireStiffnessRear = scale_tire_stiffness(ret.mass, ret.wheelbase, ret.centerToFront,
                                                                          tire_stiffness_factor=tire_stiffness_factor)
+
+        # dp
+    #ret = common_interface_get_params_lqr(ret)
+
     return ret
 
   # returns a car.CarState
@@ -164,6 +169,9 @@ class CarInterface(CarInterfaceBase):
     buttonEvents = []
 
     ret = self.CS.update(self.cp, self.cp_cam, self.cp_ext, self.CP.transmissionType)
+        # dp
+    self.dragonconf = dragonconf
+    ret.cruiseState.enabled = common_interface_atl(ret, dragonconf.dpAtl)
     ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
 
     # Check for and process state-change events (button press or release) from
@@ -200,6 +208,7 @@ class CarInterface(CarInterfaceBase):
                          hud_control.leftLaneVisible,
                          hud_control.rightLaneVisible,
                          hud_control.leftLaneDepart,
-                         hud_control.rightLaneDepart)
+                         hud_control.rightLaneDepart,
+                         self.dragonconf)
     self.frame += 1
     return ret

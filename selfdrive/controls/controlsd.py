@@ -200,6 +200,7 @@ class Controls:
     self.sm['dragonConf'].dpAtl = False
     self.sm['dragonConf'].dpSrCustom = self.CP.steerRatio
     self.sm['dragonConf'].dpSrLearner = True
+    #self.sm['dragonConf'].dpAccelProfile = False
 
   def update_events(self, CS):
     """Compute carEvents from carState"""
@@ -760,7 +761,7 @@ class Controls:
     lat_tuning = self.CP.lateralTuning.which()
     # dp - for ui
     controlsState.angleSteers = CS.steeringAngleDeg
-    controlsState.steeringAngleDesiredDeg = actuators.steeringAngleDeg
+    controlsState.steeringAngleDesiredDeg = CS.steeringAngleDeg
 
     if self.joystick_mode:
       controlsState.lateralControlState.debugState = lac_log

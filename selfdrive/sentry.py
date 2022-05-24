@@ -75,7 +75,7 @@ def save_exception(exc_text):
   print('Logged current crash to {}'.format(log_file))
 
 def bind_user(**kwargs) -> None:
-    sentry_sdk.set_user(kwargs)
+  sentry_sdk.set_user(kwargs)
 
 def capture_warning(warning_string):
   bind_user(id=dongle_id, ip_address=ip, name=gitname)
@@ -115,7 +115,7 @@ def init(project: SentryProject) -> None:
 
   sentry_sdk.set_user({"id": dongle_id})
   sentry_sdk.set_tag("dirty", is_dirty())
-  sentry_sdk.set_tag({"gitname": gitname})
+  sentry_sdk.set_user({"gitname": gitname})
   sentry_sdk.set_tag("origin", get_origin())
   sentry_sdk.set_tag("branch", get_branch())
   sentry_sdk.set_tag("commit", get_commit())

@@ -6,6 +6,7 @@ from selfdrive.car import apply_std_steer_torque_limits
 from selfdrive.car.hyundai.hyundaican import create_lkas11, create_clu11, create_lfahda_mfc, create_acc_commands, create_acc_opt, create_frt_radar_opt
 from selfdrive.car.hyundai.values import Buttons, CarControllerParams, CAR
 from opendbc.can.packer import CANPacker
+from common.dp_common import common_controller_ctrl
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 LongCtrlState = car.CarControl.Actuators.LongControlState
@@ -46,8 +47,12 @@ class CarController:
     self.steer_rate_limited = False
     self.last_resume_frame = 0
     self.accel = 0
+    # dp
+    self.last_blinker_on = False
+    self.blinker_end_frame = 0.
+    #self.dp_hkg_smart_mdps = Params().get_bool('dp_hkg_smart_mdps')
 
-  def update(self, CC, CS):
+  def update(self, CC, CS, dragonconf):
     actuators = CC.actuators
     hud_control = CC.hudControl
     pcm_cancel_cmd = CC.cruiseControl.cancel
@@ -59,6 +64,18 @@ class CarController:
 
     if not CC.latActive:
       apply_steer = 0
+
+    # dp
+    blinker_on = CS.out.leftBlinker or CS.out.rightBlinker
+    if not CC.enabled:
+      self.blinker_end_frame = 0
+    if self.last_blinker_on and not blinker_on:
+      self.blinker_end_frame = self.frame + dragonconf.dpSignalOffDelay
+    apply_steer = common_controller_ctrl(CC.enabled,
+                                         dragonconf,
+                                         blinker_on or self.frame < self.blinker_end_frame,
+                                         apply_steer, CS.out.vEgo)
+    self.last_blinker_on = blinker_on
 
     self.apply_steer_last = apply_steer
 

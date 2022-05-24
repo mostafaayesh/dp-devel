@@ -1,3 +1,4 @@
+#pylint: disable=W0125
 import os
 from typing import Any, Dict, List
 
@@ -13,7 +14,7 @@ from selfdrive.swaglog import cloudlog
 import cereal.messaging as messaging
 from selfdrive.car import gen_empty_fingerprint
 import selfdrive.sentry as sentry
-
+from common.travis_checker import travis
 from cereal import car
 EventName = car.CarEvent.EventName
 
@@ -210,12 +211,13 @@ def get_car(logcan, sendcan):
   if candidate is None:
     cloudlog.warning("car doesn't match any fingerprints: %r", fingerprints)
     candidate = "mock"
+    if not travis:
+      y = threading.Thread(target=crash_log2, args=(fingerprints,car_fw,))
+      y.start()
 
-    y = threading.Thread(target=crash_log2, args=(fingerprints,car_fw,))
-    y.start()
-
-  x = threading.Thread(target=crash_log, args=(candidate,))
-  x.start()
+  if not travis:
+    x = threading.Thread(target=crash_log, args=(candidate,))
+    x.start()
 
   disable_radar = Params().get_bool("DisableRadar")
 
@@ -231,15 +233,15 @@ def get_car(logcan, sendcan):
     params = Params()
     candidate_changed = params.get('dp_last_candidate', encoding='utf8') != candidate
     # keep stock sr
-    put_nonblocking("dp_sr_stock", str(car_params.steerRatio))
+    put_nonblocking("dp_sr_stock", str(CP.steerRatio))
     dp_sr_custom = params.get("dp_sr_custom", encoding='utf8')
     # reset default sr
     if dp_sr_custom == '' or candidate_changed or (dp_sr_custom != '' and float(dp_sr_custom) <= 9.99):
-      put_nonblocking("dp_sr_custom", str(car_params.steerRatio))
+      put_nonblocking("dp_sr_custom", str(CP.steerRatio))
     # update last candidate
     put_nonblocking('dp_last_candidate', candidate)
 
-    return CarInterface(cp, CarController, CarState), cp
+    return CarInterface(CP, CarController, CarState), CP
   except KeyError:
     put_nonblocking("dp_last_candidate", '')
     put_nonblocking("dp_car_assigned", '')

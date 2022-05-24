@@ -51,6 +51,8 @@ class CarInterfaceBase(ABC):
     if CarController is not None:
       self.CC = CarController(self.cp.dbc_name, CP, self.VM)
 
+    self.dragonconf = None
+
   @staticmethod
   def get_pid_accel_limits(CP, current_speed, cruise_speed):
     return ACCEL_MIN, ACCEL_MAX
@@ -107,7 +109,7 @@ class CarInterfaceBase(ABC):
     return ret
 
   @abstractmethod
-  def _update(self, c: car.CarControl) -> car.CarState:
+  def _update(self, c: car.CarControl, dragonconf) -> car.CarState:
     pass
 
   def update(self, c: car.CarControl, can_strings: List[bytes], dragonconf) -> car.CarState:
@@ -117,7 +119,7 @@ class CarInterfaceBase(ABC):
         cp.update_strings(can_strings)
 
     # get CarState
-    ret = self._update(c)
+    ret = self._update(c, dragonconf)
 
     ret.canValid = all(cp.can_valid for cp in self.can_parsers if cp is not None)
     ret.canTimeout = any(cp.bus_timeout for cp in self.can_parsers if cp is not None)
@@ -145,7 +147,7 @@ class CarInterfaceBase(ABC):
       events.add(EventName.wrongGear)
     if cs_out.gearShifter == GearShifter.reverse:
       events.add(EventName.reverseGear)
-    if not cs_out.cruiseState.available:
+    if not cs_out.cruiseState.available and not self.dragonconf.dpAtl:
       events.add(EventName.wrongCarMode)
     if cs_out.espDisabled:
       events.add(EventName.espDisabled)
@@ -153,9 +155,9 @@ class CarInterfaceBase(ABC):
       events.add(EventName.stockFcw)
     if cs_out.stockAeb:
       events.add(EventName.stockAeb)
-    if cs_out.vEgo > MAX_CTRL_SPEED:
+    if cs_out.vEgo > MAX_CTRL_SPEED and self.dragonconf.dpSpeedCheck:
       events.add(EventName.speedTooHigh)
-    if cs_out.cruiseState.nonAdaptive:
+    if cs_out.cruiseState.nonAdaptive and not self.dragonconf.dpAtl:
       events.add(EventName.wrongCruiseMode)
     if cs_out.brakeHoldActive and self.CP.openpilotLongitudinalControl:
       events.add(EventName.brakeHold)
@@ -165,18 +167,22 @@ class CarInterfaceBase(ABC):
       events.add(EventName.accFaulted)
 
     # Handle permanent and temporary steering faults
-    self.steering_unpressed = 0 if cs_out.steeringPressed else self.steering_unpressed + 1
-    if cs_out.steerFaultTemporary:
-      # if the user overrode recently, show a less harsh alert
-      if self.silent_steer_warning or cs_out.standstill or self.steering_unpressed < int(1.5 / DT_CTRL):
-        self.silent_steer_warning = True
-        events.add(EventName.steerTempUnavailableSilent)
-      else:
-        events.add(EventName.steerTempUnavailable)
+    if (cs_out.leftBlinker or cs_out.rightBlinker) and self.dragonconf.dpLateralMode == 0:
+      events.add(EventName.manualSteeringRequiredBlinkersOn)
     else:
-      self.silent_steer_warning = False
-    if cs_out.steerFaultPermanent:
-      events.add(EventName.steerUnavailable)
+      # Handle permanent and temporary steering faults
+      self.steering_unpressed = 0 if cs_out.steeringPressed else self.steering_unpressed + 1
+      if cs_out.steerFaultTemporary:
+        # if the user overrode recently, show a less harsh alert
+        if self.silent_steer_warning or cs_out.standstill or self.steering_unpressed < int(1.5 / DT_CTRL):
+          self.silent_steer_warning = True
+          events.add(EventName.steerTempUnavailableSilent)
+        else:
+          events.add(EventName.steerTempUnavailable)
+      else:
+        self.silent_steer_warning = False
+      if cs_out.steerFaultPermanent:
+        events.add(EventName.steerUnavailable)
 
     # we engage when pcm is active (rising edge)
     # enabling can optionally be blocked by the car interface
