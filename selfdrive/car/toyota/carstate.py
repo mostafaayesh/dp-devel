@@ -284,8 +284,6 @@ class CarState(CarStateBase):
     if CP.carFingerprint in (CAR.LEXUS_IS, CAR.LEXUS_RC, CAR.LEXUS_ISH, CAR.LEXUS_GSH, CAR.LEXUS_NXT):
       signals.append(("MAIN_ON", "DSU_CRUISE"))
       signals.append(("SET_SPEED", "DSU_CRUISE"))
-      signals.append(("MAIN_ON", "DSU_CRUISE"))
-      signals.append(("SET_SPEED", "DSU_CRUISE"))
       checks.append(("DSU_CRUISE", 5))
     else:
       signals.append(("MAIN_ON", "PCM_CRUISE_2"))

@@ -204,7 +204,8 @@ class TestCarModel(unittest.TestCase):
     CS_prev = car.CarState.new_message()
     checks = defaultdict(lambda: 0)
     for can in self.can_msgs:
-      CS = self.CI.update(CC, (can.as_builder().to_bytes(), ))
+      sm.update(0)
+      CS = self.CI.update(CC, (can.as_builder().to_bytes(), ), sm['dragonConf'])
       for msg in can_capnp_to_can_list(can.can, src_filter=range(64)):
         to_send = package_can_msg(msg)
         ret = self.safety.safety_rx_hook(to_send)
