@@ -9,7 +9,7 @@
 	url = ../../commaai/laika.git
 [submodule "cereal"]
 	path = cereal
-	url = ../../dragonpilot-community/cereal.git
+	url = ../../mostafaayesh/cereal.git
 [submodule "rednose_repo"]
 	path = rednose_repo
 	url = ../../commaai/rednose.git
