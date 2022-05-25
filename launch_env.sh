@@ -5,7 +5,6 @@ export MKL_NUM_THREADS=1
 export NUMEXPR_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 export VECLIB_MAXIMUM_THREADS=1
-export API_HOST="https://api.retropilot.org"
 
 if [ -z "$REQUIRED_NEOS_VERSION" ]; then
   export REQUIRED_NEOS_VERSION="20"
