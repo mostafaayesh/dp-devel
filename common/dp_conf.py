@@ -97,7 +97,6 @@ confs = [
   {'name': 'dp_sr_custom', 'default': 9.99, 'min': 9.99, 'max': 30., 'type': 'Float32', 'depends': [{'name': 'dp_sr_learner', 'vals': [False]}], 'conf_type': ['param', 'struct']},
   {'name': 'dp_sr_stock', 'default': 9.99, 'min': 9.99, 'max': 100., 'type': 'Float32', 'conf_type': ['param']},
 
-  {'name': 'dp_lqr', 'default': False, 'type': 'Bool', 'conf_type': ['param']},
   {'name': 'dp_reset_live_param_on_start', 'default': False, 'type': 'Bool', 'conf_type': ['param']},
 
   {'name': 'dp_jetson', 'default': False, 'type': 'Bool', 'conf_type': ['param']},
