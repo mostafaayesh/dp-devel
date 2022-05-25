@@ -58,6 +58,7 @@ class CruiseButtons:
 # Cruise setting codes
 class CruiseSetting:
   DISTANCE_ADJ = 3
+  LKAS_BUTTON = 1
 
 # See dbc files for info on values
 VISUAL_HUD = {

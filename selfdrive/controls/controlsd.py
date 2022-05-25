@@ -565,8 +565,8 @@ class Controls:
     CC = car.CarControl.new_message()
     CC.enabled = self.enabled
     # Check which actuators can be enabled
-    CC.latActive = self.active and not CS.steerFaultTemporary and not CS.steerFaultPermanent and \
-                     CS.vEgo > self.CP.minSteerSpeed and not CS.standstill
+    CC.latActive = self.enabled and not CS.steerFaultTemporary and not CS.steerFaultPermanent and \
+                     CS.vEgo > self.CP.minSteerSpeed and not CS.standstill and CS.lkMode
     CC.longActive = self.active and not self.events.any(ET.OVERRIDE) and self.CP.openpilotLongitudinalControl
 
     actuators = CC.actuators

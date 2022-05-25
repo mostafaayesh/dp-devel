@@ -380,6 +380,8 @@ class CarInterface(CarInterfaceBase):
 
     # events
     events = self.create_common_events(ret, pcm_enable=False)
+    if not self.CS.lkMode:
+      events.add(EventName.manualSteeringRequired)
     if self.CS.brake_error:
       events.add(EventName.brakeUnavailable)
 

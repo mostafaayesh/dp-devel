@@ -173,6 +173,8 @@ class CarState(CarStateBase):
     self.trMode = 3
     # Default follow distance 4 bars
     self.read_distance_lines = 4
+    # LKAS mode
+    self.lkMode = True
 
   def update(self, cp, cp_cam, cp_body):
     ret = car.CarState.new_message()
@@ -292,6 +294,12 @@ class CarState(CarStateBase):
         self.trMode = (self.trMode - 1) % 4
     self.read_distance_lines = self.trMode + 1
     ret.distanceLines = self.read_distance_lines
+
+    # When user presses lkas button on steering wheel
+    if self.prev_cruise_setting == CruiseSetting.LKAS_BUTTON:
+      if self.cruise_setting == 0:
+        self.lkMode = not self.lkMode
+    ret.lkMode = self.lkMode
 
     # TODO: discover the CAN msg that has the imperial unit bit for all other cars
     if self.CP.carFingerprint in (CAR.CIVIC, ):
