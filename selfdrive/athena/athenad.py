@@ -41,7 +41,7 @@ from selfdrive.swaglog import SWAGLOG_DIR, cloudlog
 from selfdrive.version import get_commit, get_origin, get_short_branch, get_version
 
 #dp
-API_HOST = os.getenv('API_HOST', 'https://api.commadotai.com') if not Params().get_bool("dp_api_custom") else Params().get("dp_api_custom_url", encoding='utf-8')
+API_HOST = os.getenv('API_HOST', 'https://api.retropilot.org') if not Params().get_bool("dp_api_custom") else Params().get("dp_api_custom_url", encoding='utf-8')
 
 ATHENA_HOST = os.getenv('ATHENA_HOST', 'wss://athena.comma.ai')
 HANDLER_THREADS = int(os.getenv('HANDLER_THREADS', "4"))
