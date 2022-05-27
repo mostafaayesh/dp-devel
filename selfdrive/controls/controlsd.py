@@ -111,6 +111,9 @@ class Controls:
     if not self.disengage_on_accelerator:
       self.CP.alternativeExperience |= ALTERNATIVE_EXPERIENCE.DISABLE_DISENGAGE_ON_GAS
 
+    # enable lkas only
+    self.CP.alternativeExperience |= ALTERNATIVE_EXPERIENCE.ALT_EXP_ENABLE_LKAS_ONLY
+
     # read params
     self.is_metric = params.get_bool("IsMetric")
     self.is_ldw_enabled = params.get_bool("IsLdwEnabled")
